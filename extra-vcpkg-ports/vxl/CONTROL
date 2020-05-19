@@ -1,0 +1,5 @@
+Source: vxl
+Version: v1.18.0-4
+Build-Depends: zlib
+Description: A multi-platform collection of C++ software libraries for Computer Vision and Image Understanding.
+
