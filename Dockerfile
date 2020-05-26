@@ -22,10 +22,16 @@ FROM mcr.microsoft.com/windows/servercore:ltsc2019 as pollen_step_os
 
 LABEL vendor="Pollen Metrology"
 LABEL maintainer="emmanuel.richard@pollen-metrology.com"
+
+RUN net accounts /MaxPWAge:unlimited
+RUN net user gitlab /add
+RUN net localgroup Administrators /add gitlab
+USER gitlab
 # ----------------------------------------------------------------------------------------------------- #
 
 # --------------------------------------------- SCOOP AND UPDATE -------------------------------------- #
 FROM pollen_step_os as pollen_step_scoop
+#USER Administrator
 RUN powershell -Command \
     Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh'); \
 	scoop install git; \
@@ -101,7 +107,8 @@ RUN powershell -Command \
 FROM pollen_step_vcpkg as pollen_step_gitlab-runner
 RUN powershell -Command New-Item -Path "c:\\" -Name "GitLab-Runner" -ItemType "directory"
 
-RUN powershell -Command Invoke-WebRequest -Uri "https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-windows-amd64.exe" -UseBasicParsing -OutFile "c:\\GitLab-Runner\\gitlab-runner.exe"
+#RUN powershell -Command Invoke-WebRequest -Uri "https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-windows-amd64.exe" -UseBasicParsing -OutFile "c:\\GitLab-Runner\\gitlab-runner.exe"
+COPY tools/gitlab-runner-windows-amd64.exe c:\\GitLab-Runner\\gitlab-runner.exe
 
 RUN powershell -Command c:\GitLab-Runner\.\gitlab-runner.exe install
 
@@ -114,6 +121,16 @@ COPY run.ps1 c:
 
 #CMD ["cmd"]
 #CMD ["powershell"]
+
+#
+#RUN net accounts /MaxPWAge:unlimited
+#RUN net user build_user /add
+#RUN net localgroup Administrators /add build_user
+#USER build_user
+#
+
+#RUN net user administrator
+#RUN setx path "%path%;C:\Foo\bin"
 
 ENTRYPOINT [ "powershell.exe", "C:\\.\\run.ps1" ]
 # --------------------------------------------------------------------------------------------------------- #
