@@ -11,7 +11,7 @@ function startUp() {
   --description "Kubernetes-Runner" `
   --tag-list "phoenix-windows, pyphoenix-windows" `
   --cache-type "s3" `
-  --cache-cache-shared=true `
+  --cache-shared=true `
   --cache-s3-server-address "cache.pollen-metrology.com" `
   --cache-s3-access-key "administrateur" `
   --cache-s3-secret-key "v7rB2i6t88h" `
