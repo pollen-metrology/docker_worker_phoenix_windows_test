@@ -1,5 +1,6 @@
 # docker build -t pollenm/docker_worker_phoenix_windows .
 # docker run --dns=8.8.8.8 -it pollenm/docker_worker_phoenix_windows
+# docker run --user "NT AUTHORITY\SYSTEM" -it pollenm/docker_worker_phoenix_windows
 # push to github
 # push to docker-hub => docker push pollenm/docker_worker_phoenix_windows
 
@@ -29,36 +30,38 @@ RUN net localgroup Administrators /add gitlab
 USER gitlab
 # ----------------------------------------------------------------------------------------------------- #
 
-# --------------------------------------------- SCOOP AND UPDATE -------------------------------------- #
+# --------------------------------------------- SCOOP - CHOCOLATEY - GIT ------------------------------ #
 FROM pollen_step_os as pollen_step_scoop
-#USER Administrator
 RUN powershell -Command \
     Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh'); \
-	scoop install git; \
-	scoop update;
+	scoop update --global;
+# --global 
+RUN @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))" && SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
+RUN choco install git -y    
+#RUN powershell -Command "$env:Path += ';c:\Users\gitlab\scoop\apps\git\current\bin\'"
 # ----------------------------------------------------------------------------------------------------- #    
 
 # --------------------------------------------- PYTHON ------------------------------------------------ #
 FROM pollen_step_scoop as pollen_step_python
 RUN powershell -Command \
-	scoop install python@3.6.10; \
-	scoop install python@3.7.6; \
-	scoop install python@3.8.2;
+	scoop install python@3.6.10 --global; \
+	scoop install python@3.7.6 --global; \
+	scoop install python@3.8.2 --global;
 # ----------------------------------------------------------------------------------------------------- # 
 
 # --------------------------------------------- DOXYGEN ----------------------------------------------- #
 FROM pollen_step_python as pollen_step_doxygen
-RUN powershell -Command scoop install doxygen;
+RUN powershell -Command scoop install doxygen --global;
 # ----------------------------------------------------------------------------------------------------- # 
 
 # --------------------------------------------- GRAPHVIZ ---------------------------------------------- #
 FROM pollen_step_doxygen as pollen_step_graphiz
-RUN powershell -Command scoop install graphviz;
+RUN powershell -Command scoop install graphviz --global;
 # ----------------------------------------------------------------------------------------------------- # 
 
 # --------------------------------------------- CMAKE ------------------------------------------------- #
 FROM pollen_step_graphiz as pollen_step_cmake
-RUN powershell -Command scoop install cmake@3.16.4;
+RUN powershell -Command scoop install cmake@3.16.4 --global;
 # ----------------------------------------------------------------------------------------------------- # 
 
 # --------------------------------------------- VS2019 ------------------------------------------------ #
@@ -119,18 +122,7 @@ RUN powershell -Command c:\GitLab-Runner\.\gitlab-runner.exe install
 FROM pollen_step_gitlab-runner as pollen_step_entrypoint
 COPY run.ps1 c:
 
-#CMD ["cmd"]
-#CMD ["powershell"]
-
-#
-#RUN net accounts /MaxPWAge:unlimited
-#RUN net user build_user /add
-#RUN net localgroup Administrators /add build_user
-#USER build_user
-#
-
-#RUN net user administrator
-#RUN setx path "%path%;C:\Foo\bin"
+# RUN powershell -Command "$env:Path += ';c:\Users\gitlab\scoop\shims\'"
 
 ENTRYPOINT [ "powershell.exe", "C:\\.\\run.ps1" ]
 # --------------------------------------------------------------------------------------------------------- #
