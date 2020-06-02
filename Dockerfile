@@ -19,7 +19,8 @@
 #----------------------------------------------------------------------------------------------------------------------#
 
 # --------------------------------------------- OS ---------------------------------------------------- #
-FROM mcr.microsoft.com/windows/servercore:ltsc2019 as pollen_step_os
+#FROM mcr.microsoft.com/windows/servercore:ltsc2019 as pollen_step_os
+FROM mcr.microsoft.com/windows/servercore:10.0.17763.737 as pollen_step_os
 
 LABEL vendor="Pollen Metrology"
 LABEL maintainer="emmanuel.richard@pollen-metrology.com"
