@@ -106,7 +106,6 @@ RUN powershell -Command \
 	.\vcpkg\vcpkg.exe install --overlay-ports=C:\extra-vcpkg-ports\ --triplet x64-windows-static --clean-after-build boost-core boost-math boost-crc boost-random boost-format boost-stacktrace cereal vxl opencv3[core,contrib,tiff,png,jpeg] eigen3 gtest
 # ----------------------------------------------------------------------------------------------------- #
 
-
 # --------------------------------------------- GITLAB-RUNNER ----------------------------------------- #
 FROM pollen_step_vcpkg as pollen_step_gitlab-runner
 RUN powershell -Command New-Item -Path "c:\\" -Name "GitLab-Runner" -ItemType "directory"
@@ -118,6 +117,10 @@ RUN powershell -Command c:\GitLab-Runner\.\gitlab-runner.exe install
 
 # --------------------------------------------- END GITLAB-RUNNER ------------------------------------------#
 
+# --------------------------------------------- COPY MISSING DLL ----------------------------------------- #
+
+COPY dlls/opengl32.dll c:\\Windows\\System32\\opengl32.dll
+COPY dlls/glu32.dll c:\\Windows\\System32\\glu32.dll
 
 # --------------------------------------------- ENTRYPOINT ------------------------------------------------ #
 FROM pollen_step_gitlab-runner as pollen_step_entrypoint
