@@ -31,7 +31,7 @@ function shutDown() {
 try
 {
   # startup 
-  #startUp
+  startUp
     # Keep Alive
     while($true)
     {
