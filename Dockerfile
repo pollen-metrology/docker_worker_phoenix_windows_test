@@ -65,8 +65,18 @@ FROM pollen_step_graphiz as pollen_step_cmake
 RUN powershell -Command scoop install cmake@3.16.4 --global;
 # ----------------------------------------------------------------------------------------------------- # 
 
+
+# --------------------------------------------- VS2015 ------------------------------------------------ #
+FROM pollen_step_cmake as pollen_step_vs2015
+ RUN \
+    # Install VS Build Tools 2015
+    powershell.exe Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1')) \
+    && choco install -y --no-progress visualcpp-build-tools --version=14.0.25420.1 \
+    && choco install -y --no-progress vcbuildtools --version=2015.2
+# ----------------------------------------------------------------------------------------------------- #
+
 # --------------------------------------------- VS2019 ------------------------------------------------ #
-FROM pollen_step_cmake as pollen_step_vs2019
+FROM pollen_step_vs2015 as pollen_step_vs2019
 RUN \
     # Install VS Build Tools
     curl -fSLo vs_BuildTools.exe https://download.visualstudio.microsoft.com/download/pr/378e5eb4-c1d7-4c05-8f5f-55678a94e7f4/a022deec9454c36f75dafe780b797988b6111cfc06431eb2e842c1811151c40b/vs_BuildTools.exe \
@@ -84,16 +94,10 @@ RUN \
     && del vs_BuildTools.exe
 # ----------------------------------------------------------------------------------------------------- # 
 
-# --------------------------------------------- CLEANUP ----------------------------------------------- #
-FROM pollen_step_vs2019 as pollen_step_cleanup
-RUN \
-    # Cleanup
-    powershell Remove-Item -Force -Recurse "%TEMP%\*" \
-    && rmdir /S /Q "%ProgramData%\Package Cache"
 # ----------------------------------------------------------------------------------------------------- #     
 
 # --------------------------------------------- VCPKG ------------------------------------------------- #
-FROM pollen_step_cleanup as pollen_step_vcpkg
+FROM pollen_step_vs2019 as pollen_step_vcpkg
 COPY extra-vcpkg-ports /extra-vcpkg-ports
 # Install VCPKG
 RUN powershell -Command \
@@ -104,10 +108,21 @@ RUN powershell -Command \
 ### Install Phoenix dependencies via vcpkg
 RUN powershell -Command \
 	.\vcpkg\vcpkg.exe install --overlay-ports=C:\extra-vcpkg-ports\ --triplet x64-windows-static --clean-after-build boost-core boost-math boost-crc boost-random boost-format boost-stacktrace cereal vxl opencv3[core,contrib,tiff,png,jpeg] eigen3 gtest
+COPY vcpkg/triplets/x64-windows-static-dynamic-v140.cmake c:\\vcpkg\\triplets
+RUN powershell -Command \
+	.\vcpkg\vcpkg.exe install --overlay-ports=C:\extra-vcpkg-ports\ --triplet x64-windows-static-dynamic-v140 --clean-after-build boost-core boost-math boost-crc boost-random boost-format boost-stacktrace cereal vxl opencv3[core,contrib,tiff,png,jpeg] eigen3 gtest
 # ----------------------------------------------------------------------------------------------------- #
 
+
+# --------------------------------------------- CLEANUP ----------------------------------------------- #
+FROM pollen_step_vcpkg as pollen_step_cleanup
+#RUN \
+    # Cleanup
+    #powershell Remove-Item -Force -Recurse "%TEMP%\*" \
+    #&& rmdir /S /Q "%ProgramData%\Package Cache"
+
 # --------------------------------------------- GITLAB-RUNNER ----------------------------------------- #
-FROM pollen_step_vcpkg as pollen_step_gitlab-runner
+FROM pollen_step_cleanup as pollen_step_gitlab-runner
 RUN powershell -Command New-Item -Path "c:\\" -Name "GitLab-Runner" -ItemType "directory"
 
 #RUN powershell -Command Invoke-WebRequest -Uri "https://gitlab-runner-downloads.s3.amazonaws.com/latest/binaries/gitlab-runner-windows-amd64.exe" -UseBasicParsing -OutFile "c:\\GitLab-Runner\\gitlab-runner.exe"
@@ -118,12 +133,24 @@ RUN powershell -Command c:\GitLab-Runner\.\gitlab-runner.exe install
 # --------------------------------------------- END GITLAB-RUNNER ------------------------------------------#
 
 # --------------------------------------------- COPY MISSING DLL ----------------------------------------- #
-
+FROM pollen_step_gitlab-runner as pollen_step_copy_missing_dll
 COPY dlls/opengl32.dll c:\\Windows\\System32\\opengl32.dll
 COPY dlls/glu32.dll c:\\Windows\\System32\\glu32.dll
+# ----------------------------------------------------------------------------------------------------- # 
+
+# --------------------------------------------- CONAN ------------------------------------------------ #
+FROM pollen_step_copy_missing_dll as pollen_step_conan
+RUN powershell -Command python3 -m pip install conan;
+# ----------------------------------------------------------------------------------------------------- # 
+
+# --------------------------------------------- CMAKE ------------------------------------------------- #
+FROM pollen_step_conan as pollen_step_cmake_reset_version
+RUN powershell -Command scoop install cmake@3.18.0 --global;
+RUN powershell -Command scoop reset cmake@3.18.0;
+# ----------------------------------------------------------------------------------------------------- # 
 
 # --------------------------------------------- ENTRYPOINT ------------------------------------------------ #
-FROM pollen_step_gitlab-runner as pollen_step_entrypoint
+FROM pollen_step_cmake_reset_version as pollen_step_entrypoint
 COPY run.ps1 c:
 
 # RUN powershell -Command "$env:Path += ';c:\Users\gitlab\scoop\shims\'"
