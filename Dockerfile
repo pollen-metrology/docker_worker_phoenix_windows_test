@@ -79,7 +79,7 @@ RUN powershell -Command \
 	cd vcpkg; \
 	git checkout 411b4cc; \
 	.\bootstrap-vcpkg.bat -disableMetrics;
-### Install Phoenix dependencies via vcpkg
+# Install Phoenix dependencies via vcpkg
 RUN powershell -Command \
 	.\vcpkg\vcpkg.exe install --overlay-ports=C:\extra-vcpkg-ports\ --triplet x64-windows-static --clean-after-build boost-core boost-math boost-crc boost-random boost-format boost-stacktrace cereal vxl opencv3[core,contrib,tiff,png,jpeg] eigen3 gtest boost-geometry
 COPY vcpkg/triplets/x64-windows-static-dynamic-v140.cmake c:\\vcpkg\\triplets
@@ -107,12 +107,25 @@ RUN powershell -Command \
 
 # --------------------------------------------- DOXYGEN ----------------------------------------------- #
 FROM pollen_step_python as pollen_step_doxygen
-RUN powershell -Command scoop install doxygen --global;
+#RUN powershell -Command scoop install doxygen --global;
+COPY tools/doxygen-1.8.18.windows.bin.zip c:\\TEMP\\doxygen-1.8.18.windows.bin.zip
+RUN powershell -Command Expand-Archive -LiteralPath "c:\TEMP\doxygen-1.8.18.windows.bin.zip" -DestinationPath "%ProgramData%\doxygen"
+#RUN powershell -Command "$env:Path += ';%ProgramData%\doxygen'"
+#ENV PATH="${PATH}:%ProgramData%\doxygen"
+#ENV PATH=$PATH:%ProgramData%\\doxygen
+#ENV PATH='c:\\ProgramData\\doxygen:$PATH'
+RUN setx path "%path%;%ProgramData%\doxygen"
 # ----------------------------------------------------------------------------------------------------- # 
 
 # --------------------------------------------- GRAPHVIZ ---------------------------------------------- #
 FROM pollen_step_doxygen as pollen_step_graphiz
-RUN powershell -Command scoop install graphviz --global;
+#RUN powershell -Command scoop install graphviz --global;
+COPY tools/graphviz-2.38.zip c:\\TEMP\\graphviz-2.38.zip
+RUN powershell -Command Expand-Archive -LiteralPath "C:\TEMP\graphviz-2.38.zip" -DestinationPath "%ProgramData%\graphviz"
+#RUN powershell -Command "$env:Path += ';%ProgramData%\graphviz\release\bin'"
+#ENV PATH="${PATH}:%ProgramData%\graphviz\release\bin"
+#ENV PATH='$PATH:%ProgramData%\graphviz\release\bin'
+RUN setx path "%path%;%ProgramData%\graphviz\release\bin"
 # ----------------------------------------------------------------------------------------------------- # 
 
 # --------------------------------------------- CMAKE ------------------------------------------------- #
