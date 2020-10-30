@@ -81,10 +81,10 @@ RUN powershell -Command \
 	.\bootstrap-vcpkg.bat -disableMetrics;
 # Install Phoenix dependencies via vcpkg
 RUN powershell -Command \
-	.\vcpkg\vcpkg.exe install --overlay-ports=C:\extra-vcpkg-ports\ --triplet x64-windows-static --clean-after-build boost-core boost-math boost-crc boost-random boost-format boost-stacktrace cereal vxl opencv3[core,contrib,tiff,png,jpeg] eigen3 gtest boost-geometry
+	.\vcpkg\vcpkg.exe install --overlay-ports=C:\extra-vcpkg-ports\ --triplet x64-windows-static --clean-after-build boost-core boost-math boost-crc boost-random boost-format boost-stacktrace cereal vxl opencv3[core,contrib,tiff,png,jpeg] eigen3 gtest boost-geometry nlopt
 COPY vcpkg/triplets/x64-windows-static-dynamic-v140.cmake c:\\vcpkg\\triplets
 RUN powershell -Command \
-	.\vcpkg\vcpkg.exe install --overlay-ports=C:\extra-vcpkg-ports\ --triplet x64-windows-static-dynamic-v140 --clean-after-build boost-core boost-math boost-crc boost-random boost-format boost-stacktrace cereal vxl opencv3[core,contrib,tiff,png,jpeg] eigen3 gtest boost-geometry
+	.\vcpkg\vcpkg.exe install --overlay-ports=C:\extra-vcpkg-ports\ --triplet x64-windows-static-dynamic-v140 --clean-after-build boost-core boost-math boost-crc boost-random boost-format boost-stacktrace cereal vxl opencv3[core,contrib,tiff,png,jpeg] eigen3 gtest boost-geometry nlopt
 # ----------------------------------------------------------------------------------------------------- #
 
 # --------------------------------------------- CLEANUP ----------------------------------------------- #
@@ -114,7 +114,7 @@ RUN powershell -Command Expand-Archive -LiteralPath "c:\TEMP\doxygen-1.8.18.wind
 #ENV PATH="${PATH}:%ProgramData%\doxygen"
 #ENV PATH=$PATH:%ProgramData%\\doxygen
 #ENV PATH='c:\\ProgramData\\doxygen:$PATH'
-RUN setx path "%path%;%ProgramData%\doxygen"
+#RUN cmd 'setx /S path "%path%;%ProgramData%\doxygen"'
 # ----------------------------------------------------------------------------------------------------- # 
 
 # --------------------------------------------- GRAPHVIZ ---------------------------------------------- #
@@ -125,7 +125,7 @@ RUN powershell -Command Expand-Archive -LiteralPath "C:\TEMP\graphviz-2.38.zip" 
 #RUN powershell -Command "$env:Path += ';%ProgramData%\graphviz\release\bin'"
 #ENV PATH="${PATH}:%ProgramData%\graphviz\release\bin"
 #ENV PATH='$PATH:%ProgramData%\graphviz\release\bin'
-RUN setx path "%path%;%ProgramData%\graphviz\release\bin"
+#RUN setx path "%path%;%ProgramData%\graphviz\release\bin"
 # ----------------------------------------------------------------------------------------------------- # 
 
 # --------------------------------------------- CMAKE ------------------------------------------------- #
@@ -161,6 +161,22 @@ FROM pollen_step_copy_missing_dll as pollen_step_entrypoint
 COPY run.ps1 c:
 
 # RUN powershell -Command "$env:Path += ';c:\Users\gitlab\scoop\shims\'"
+#RUN 'setx /S PATH "C:\AAAAAAAAAAAAAAAAAAA;%PATH%"'
+#RUN SET "PATH=%PATH%;%ProgramData%\doxygen"
+#RUN @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
+#RUN @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "ls" && SET "PATH=%PATH%;%ALLUSERSPROFILE%\AAA\AAA"
+
+#USER NT AUTHORITY\SYSTEM
+#RUN powershell -Command '$env:Path += ";C:\ProgramData\doxygen"'
+# RUN powershell -Command New-Item -Path "c:\\" -Name "GitLab-Runner" -ItemType "directory"
+#USER gitlab
+USER ContainerAdministrator
+RUN setx /M PATH "%PATH%;C:/ProgramData/doxygen"
+RUN setx /M PATH "%PATH%;C:\ProgramData\graphviz\release\bin"
+USER gitlab
+
+#RUN powershell -Command '[Environment]::SetEnvironmentVariable("Path", $env:Path + ";C:\ProgramData\graphviz\release\bin", [EnvironmentVariableTarget]::Machine)'
+#RUN echo $env:path
 
 ENTRYPOINT [ "powershell.exe", "C:\\.\\run.ps1" ]
 # --------------------------------------------------------------------------------------------------------- #
