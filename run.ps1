@@ -6,9 +6,9 @@ function startUp() {
   --executor "shell" `
   --shell "powershell" `
   --url "https://gitlab.com/" `
-  --registration-token nYAsaK9DqxZevC5Sn5Qn `
+  --registration-token $env:KUBERNETES_RUNNER_REGISTER_TOKEN `
   --description "Kubernetes-Runner" `
-  --tag-list "phoenix-windows-test, pyphoenix-windows-test" `
+  --tag-list $env:KUBERNETES_RUNNER_TAG `
   --cache-type "s3" `
   --cache-shared=true `
   --cache-s3-server-address $env:KUBERNETES_RUNNER_CACHE_SERVER_ADDRESS.trim("") `
