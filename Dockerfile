@@ -57,7 +57,7 @@ FROM pollen_step_scoop_choco_git as pollen_step_vs2015
 # Select a download folder to generate in the full installation
 # BuildTools_MSBuild.msi is not found, select it in the mounted lector D: => D:\packages\BuildTools_MSBuild_amd64\BuildTools_MSBuild.msi
 # Copy all the files in vcbuildtoolsfull2015.zip
-
+# P:\Development environment\Tools not in development environment\visual_studio\VisualCppBuildToolsFull2015\vcbuildtoolsfull2015.zip
 COPY tools/vcbuildtoolsfull2015.zip c:\\TEMP\\vcbuildtoolsfull2015.zip
 RUN powershell -Command Expand-Archive -LiteralPath 'C:\TEMP\vcbuildtoolsfull2015.zip' -DestinationPath 'C:\TEMP\vcbuildtoolsfull2015'
 RUN powershell -Command "c:\TEMP\vcbuildtoolsfull2015\VisualCppBuildTools_Full.exe" /NoRefresh /NoRestart /NoWeb /Passive /Quiet
